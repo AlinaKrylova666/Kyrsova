@@ -29,39 +29,41 @@ def category_expenses_report(transactions_df, category, date=None):
     else:
         date = pd.to_datetime(date)
 
-    three_months_ago = date - timedelta(days=90)
+    three_months_ago = date - pd.DateOffset(months=3)
+
+
+    transactions_df['Дата операции'] = pd.to_datetime(transactions_df['Дата операции'], errors='coerce', dayfirst=True)
 
     # Фильтруем транзакции по категории и дате
     filtered_transactions = transactions_df[
-        (transactions_df['category'] == category) &
-        (transactions_df['date'] >= three_months_ago) &
-        (transactions_df['date'] <= date)
+        (transactions_df['Категория'] == category) &
+        (transactions_df['Дата операции'] >= three_months_ago) &
+        (transactions_df['Дата операции'] <= date)
     ]
 
     # Вычисляем общую сумму трат по категории
-    total_expenses = filtered_transactions['amount'].sum()
+    total_expenses = filtered_transactions['Сумма операции с округлением'].sum()
 
-    # Преобразуем результат в стандартные Python типы
+    # Формируем отчет
     report = {
-        "category": category,
-        "total_expenses": float(total_expenses),  # Преобразование в float
+        "Категория": category,
+        "total_expenses": float(total_expenses),
         "from_date": three_months_ago.strftime('%Y-%m-%d'),
         "to_date": date.strftime('%Y-%m-%d')
     }
 
     return report
 
-
 # Пример использования
 if __name__ == "__main__":
     # Пример данных
     data = {
-        'date': ['2023-08-01', '2023-09-15', '2023-10-05', '2023-11-01'],
-        'category': ['Еда', 'Еда', 'Транспорт', 'Еда'],
-        'amount': [100, 150, 200, 250]
+        'Дата операции': ['2023-08-01', '2023-09-15', '2023-10-05', '2023-11-01'],
+        'Категория': ['Еда', 'Еда', 'Транспорт', 'Еда'],
+        'Сумма операции с округлением': [100, 150, 200, 250]
     }
     transactions_df = pd.DataFrame(data)
-    transactions_df['date'] = pd.to_datetime(transactions_df['date'])
+    transactions_df['Дата операции'] = pd.to_datetime(transactions_df['Дата операции'])
 
     # Генерация отчета
     report = category_expenses_report(transactions_df, 'Еда')
