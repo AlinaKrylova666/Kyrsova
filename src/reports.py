@@ -12,10 +12,9 @@ def save_report_to_file(filename=None):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            result = func(*args, **kwargs)
+            result:pd.DataFrame = func(*args, **kwargs)
             output_filename = filename or f"report_{func.__name__}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-            with open(output_filename, 'w', encoding='utf-8') as file:
-                json.dump(result, file, ensure_ascii=False, indent=4)
+            result.to_json(path_or_buf=output_filename, indent=4, force_ascii=False, orient="records")
             logging.info(f"Отчет сохранен в файл: {output_filename}")
             return result
         return wrapper
@@ -38,21 +37,10 @@ def category_expenses_report(transactions_df, category, date=None):
     filtered_transactions = transactions_df[
         (transactions_df['Категория'] == category) &
         (transactions_df['Дата операции'] >= three_months_ago) &
-        (transactions_df['Дата операции'] <= date)
+        (transactions_df['Дата операции'] <= date) &
+        (transactions_df['Сумма операции'] < 0)
     ]
-
-    # Вычисляем общую сумму трат по категории
-    total_expenses = filtered_transactions['Сумма операции с округлением'].sum()
-
-    # Формируем отчет
-    report = {
-        "Категория": category,
-        "total_expenses": float(total_expenses),
-        "from_date": three_months_ago.strftime('%Y-%m-%d'),
-        "to_date": date.strftime('%Y-%m-%d')
-    }
-
-    return report
+    return filtered_transactions
 
 # Пример использования
 if __name__ == "__main__":

@@ -1,34 +1,27 @@
-import pytest
+import unittest
 import pandas as pd
+from datetime import datetime
 from src.reports import category_expenses_report
 
-# Функция для тестирования отчета по тратам
-def test_category_expenses_report():
-    data = {
-        'date': ['2023-08-01', '2023-09-15', '2023-10-05', '2023-11-01'],
-        'category': ['Еда', 'Еда', 'Транспорт', 'Еда'],
-        'amount': [100, 150, 200, 250]
-    }
-    transactions_df = pd.DataFrame(data)
-    transactions_df['date'] = pd.to_datetime(transactions_df['date'])
 
-    # Ожидаемый результат
-    expected_report = {
-        "category": "Еда",
-        "total_expenses": 500.0,  # Сумма за последние три месяца (250 + 150 + 100)
-        "from_date": (pd.to_datetime('2023-11-01') - pd.Timedelta(days=90)).strftime('%Y-%m-%d'),
-        "to_date": '2023-11-01'
-    }
+def test_category_expenses_report_correct_category(self):
+    # Тестируем фильтрацию транзакций по категории 'Еда'
+    report = category_expenses_report(self.transactions_df, 'Еда')
+    self.assertEqual(len(report), 2)  # Ожидаем 2 транзакции по категории 'Еда'
+    self.assertTrue((report['Категория'] == 'Еда').all())
 
-    # Генерация отчета
-    report = category_expenses_report(transactions_df, 'Еда', '2023-11-01')
+def test_category_expenses_report_date_range(self):
+    # Тестируем правильность фильтрации по дате
+    specific_date = datetime(2023, 11, 1)
+    report = category_expenses_report(self.transactions_df, 'Еда', specific_date)
+    self.assertEqual(len(report), 2)  # Ожидаем 2 транзакции за последние три месяца
+    self.assertTrue((report['Дата операции'] >= specific_date - pd.DateOffset(months=3)).all())
+    self.assertTrue((report['Дата операции'] <= specific_date).all())
 
-    # Проверка, что результат соответствует ожиданиям
-    assert report['category'] == expected_report['category']
-    assert report['total_expenses'] == expected_report['total_expenses']
-    assert report['from_date'] == expected_report['from_date']
-    assert report['to_date'] == expected_report['to_date']
+def test_category_expenses_report_no_transactions(self):
+    # Тестируем случай, когда транзакций по категории нет
+    report = category_expenses_report(self.transactions_df, 'Транспорт')
+    self.assertEqual(len(report), 0)
 
-# Запуск тестов через командную строку
-if __name__ == "__main__":
-    pytest.main()
+if __name__ == '__main__':
+    unittest.main()

@@ -4,8 +4,8 @@ from datetime import datetime
 
 def analyze_cashback_categories(data, year, month):
     filtered_data = filter(
-        lambda transaction: pd.to_datetime(transaction['Дата операции']).year == year and pd.to_datetime
-        (transaction['Дата операции']).month == month,
+        lambda transaction: pd.to_datetime(transaction['Дата операции'], dayfirst=True).year == year and pd.to_datetime
+        (transaction['Дата операции'], dayfirst=True).month == month,
         data
     )
 
@@ -21,30 +21,3 @@ def analyze_cashback_categories(data, year, month):
             cashback_summary[category] = cashback
 
     return cashback_summary
-
-
-def category_expenses_report(transactions_df, category, date=None):
-    if date is None:
-        date = datetime.now()
-    else:
-        date = pd.to_datetime(date)
-
-    three_months_ago = date - pd.DateOffset(months=3)
-
-    filtered_transactions = transactions_df[
-        (transactions_df['Категория'] == category) &
-        (transactions_df['Дата операции'] >= three_months_ago) &
-        (transactions_df['Дата операции'] <= date)
-        ]
-
-    total_expenses = filtered_transactions['Сумма операции с округлением'].sum()
-
-    report = {
-        "Категория": category,
-        "total_expenses": float(total_expenses),
-        "from_date": three_months_ago.strftime('%Y-%m-%d'),
-        "to_date": date.strftime('%Y-%m-%d')
-    }
-
-    return report
-
