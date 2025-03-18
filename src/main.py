@@ -1,19 +1,26 @@
+from src.views import generate_main_page
+from src.services import analyze_cashback_categories
 from src.reports import category_expenses_report
 import pandas as pd
+import os
 
 def main():
-    # Пример данных
-    data = {
-        'date': ['2023-08-01', '2023-09-15', '2023-10-05', '2023-11-01'],
-        'category': ['Еда', 'Еда', 'Транспорт', 'Еда'],
-        'amount': [100, 150, 200, 250]
-    }
-    transactions_df = pd.DataFrame(data)
-    transactions_df['date'] = pd.to_datetime(transactions_df['date'])
+    current_dir = os.path.dirname(__file__)
+    root_dir = os.path.join(current_dir, "..")
+    operations_path = os.path.join(root_dir, "data", "operations.xlsx")
+    transactions_df = pd.read_excel(operations_path)
 
-    # Генерация отчета
-    report = category_expenses_report(transactions_df, 'Еда')
-    print("Отчет по тратам:", report)
+    transactions_as_dicts = transactions_df.to_dict(orient='records')
+
+    main_page_info = generate_main_page(transactions_df, '2021-12-11 01:02:03')
+    print(main_page_info)
+
+    service_info = analyze_cashback_categories(transactions_as_dicts, 2021, 11)
+    print(service_info)
+
+    report_info = category_expenses_report(transactions_df, 'Еда')
+    print(report_info)
+
 
 if __name__ == "__main__":
     main()

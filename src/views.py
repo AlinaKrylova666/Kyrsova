@@ -1,81 +1,41 @@
-import json
-import requests
 from datetime import datetime
+from src.utils import load_user_settings, get_greeting, get_currency_rates, get_stock_prices, collect_cards_data, get_top_transactions
 import pandas as pd
 
-
-# Загрузка пользовательских настроек
-def load_user_settings():
-    with open('user_settings.json', 'r') as file:
-        settings = json.load(file)
-    return settings
-
-
-# Функция для получения приветствия в зависимости от времени
-def get_greeting(current_time):
-    hour = current_time.hour
-    if 5 <= hour < 12:
-        return "Доброе утро"
-    elif 12 <= hour < 18:
-        return "Добрый день"
-    elif 18 <= hour < 22:
-        return "Добрый вечер"
-    else:
-        return "Доброй ночи"
-
-
-# Функция для получения курса валют
-def get_currency_rates(currencies):
-    # Здесь необходимо использовать API для получения курсов валют
-    # Пример: запрос к какому-либо сервису
-    rates = {}
-    for currency in currencies:
-        # Пример запроса к фиктивному API
-        response = requests.get(f"https://api.example.com/currency?symbol={currency}")
-        data = response.json()
-        rates[currency] = data['rate']
-    return rates
-
-
-# Функция для получения цен на акции
-def get_stock_prices(stocks):
-    # Здесь необходимо использовать API для получения цен на акции
-    prices = {}
-    for stock in stocks:
-        # Пример запроса к фиктивному API
-        response = requests.get(f"https://api.example.com/stocks?symbol={stock}")
-        data = response.json()
-        prices[stock] = data['price']
-    return prices
-
-
-# Главная функция
-def generate_report(date_time_str):
+def generate_main_page(transactions_df, date_time_str):
     settings = load_user_settings()
+    end_period = datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S')
+    start_period = end_period.replace(day=1, hour=0, minute=0, second=0)
 
-    # Преобразование строки даты и времени в объект datetime
-    current_time = datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S')
+    # Фильтруем транзакции по заданному периоду
+    only_in_period = transactions_df.loc[
+        (pd.to_datetime(transactions_df["Дата операции"], dayfirst=True) >= start_period) &
+        (pd.to_datetime(transactions_df["Дата операции"], dayfirst=True) <= end_period)
+    ]
 
-    # Приветствие
+    # Фильтруем только расходы
+    expenses_only = only_in_period.loc[only_in_period["Сумма операции"] < 0]
+
+    current_time = datetime.now()
     greeting = get_greeting(current_time)
+    cards_info = collect_cards_data(expenses_only)
+    top_five = get_top_transactions(only_in_period)
 
-    # Курсы валют
     currency_rates = get_currency_rates(settings['user_currencies'])
-
-    # Цены на акции
     stock_prices = get_stock_prices(settings['user_stocks'])
 
-    # Формирование JSON-ответа
+    # Формируем ответ в виде словаря
     response = {
         "greeting": greeting,
         "currency_rates": currency_rates,
         "stock_prices": stock_prices,
-        # Добавьте сюда данные по картам и транзакциям
+        "cards": cards_info,
+        "top_transactions": top_five  # Добавляем топ транзакции в ответ
     }
-
-    return json.dumps(response, ensure_ascii=False)
-
+    return response
 
 # Пример использования
 if __name__ == "__main__":
-    print(generate_report("2023-11-01 14:30:00"))
+    df = pd.read_excel('../data/operations.xlsx')
+    result = generate_main_page(df, '2021-11-30 05:05:05')
+    print(result)
