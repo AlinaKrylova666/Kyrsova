@@ -5,12 +5,12 @@ from datetime import datetime
 from src.views import generate_main_page
 
 class TestGenerateMainPage(unittest.TestCase):
-    @patch('src.utils.load_user_settings')
-    @patch('src.utils.get_greeting')
-    @patch('src.utils.get_currency_rates')
-    @patch('src.utils.get_stock_prices')
-    @patch('src.utils.collect_cards_data')
-    @patch('src.utils.get_top_transactions')
+    @patch('src.views.load_user_settings')
+    @patch('src.views.get_greeting')
+    @patch('src.views.get_currency_rates')
+    @patch('src.views.get_stock_prices')
+    @patch('src.views.collect_cards_data')
+    @patch('src.views.get_top_transactions')
     def test_generate_main_page(self, mock_top_transactions, mock_collect_cards_data,
                                 mock_get_stock_prices, mock_get_currency_rates,
                                 mock_get_greeting, mock_load_user_settings):

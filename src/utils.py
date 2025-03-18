@@ -68,7 +68,37 @@ def collect_cards_data(data):
         cards_info.append(current_card)
     return cards_info
 
-def get_top_transactions(data:pd.DataFrame):
-    sorted_bay_prace = data.sort_values("Сумма операции")
-    top_five = sorted_bay_prace.nlargest(5,"Сумма операции")
-    return top_five
+
+def get_top_transactions(data: pd.DataFrame):
+    # Сортируем данные по сумме операции
+    sorted_by_price = data.sort_values("Сумма операции")
+    # Выбираем 5 топовых транзакций
+    top_five = sorted_by_price.nlargest(5, "Сумма операции")
+
+    # Убедимся, что даты в формате datetime
+    top_five['Дата операции'] = pd.to_datetime(top_five['Дата операции'], errors='coerce', dayfirst=True)
+
+    # Формируем список словарей
+    result = []
+    for index, info in top_five.iterrows():
+        current_line_info = {
+            'category': info['Категория'],  # Категория
+            'amount': info['Сумма операции'],  # Сумма
+            'description': info['Описание'],  # Описание
+            'date': info['Дата операции'].date() if pd.notnull(info['Дата операции']) else None  # Дата, без времени
+        }
+        result.append(current_line_info)
+
+    return result
+
+# Пример вызова функции
+if __name__ == "__main__":
+    # Создаем тестовый DataFrame
+    data = pd.DataFrame({
+        'Дата операции': ['2023-01-01', '2023-02-01', '2023-03-01', '2023-04-01', '2023-05-01'],
+        'Категория': ['Еда', 'Развлечения', 'Транспорт', 'Одежда', 'Электроника'],
+        'Сумма операции': [100, 150, 200, 250, 300],
+        'Описание': ['Покупка продуктов', 'Кино', 'Проезд', 'Покупка одежды', 'Техника']
+    })
+    top_transactions = get_top_transactions(data)
+    print(top_transactions)
